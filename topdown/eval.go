@@ -1465,6 +1465,20 @@ type evalResolver struct {
 }
 
 func (e *evalResolver) Resolve(ref ast.Ref) (ast.Value, error) {
+	value, err := e.Resolve0(ref)
+	if err != nil {
+		return value, err
+	}
+	if value == nil {
+		if len(ref) > 0 {
+			return nil, fmt.Errorf("invalid path at line:%d, path:%s, not available at input data", ref[0].Location.Row, ref.String())
+		}
+		return nil, fmt.Errorf("invalid path, unknown path")
+	}
+	return value, nil
+}
+
+func (e *evalResolver) Resolve0(ref ast.Ref) (ast.Value, error) {
 	e.e.instr.startTimer(evalOpResolve)
 
 	if e.e.inliningControl.Disabled(ref, true) || e.e.saveSet.Contains(ast.NewTerm(ref), nil) {
